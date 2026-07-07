@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		ABCD000200000000000000C7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ABCD000100000000000000B3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ABCD000100000000000000AF;
+			remoteInfo = MyTrip;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		ABCD000100000000000000AE /* MyTrip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyTrip.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ABCD000200000000000000C1 /* MyTripUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyTripUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -29,10 +40,24 @@
 			path = MyTrip;
 			sourceTree = "<group>";
 		};
+		ABCD000200000000000000C2 /* MyTripUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = MyTripUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		ABCD000100000000000000AB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ABCD000200000000000000C4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -46,6 +71,7 @@
 			isa = PBXGroup;
 			children = (
 				ABCD000100000000000000AA /* MyTrip */,
+				ABCD000200000000000000C2 /* MyTripUITests */,
 				ABCD000100000000000000AD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				ABCD000100000000000000AE /* MyTrip.app */,
+				ABCD000200000000000000C1 /* MyTripUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,6 +110,29 @@
 			productReference = ABCD000100000000000000AE /* MyTrip.app */;
 			productType = "com.apple.product-type.application";
 		};
+		ABCD000200000000000000C6 /* MyTripUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ABCD000200000000000000CB /* Build configuration list for PBXNativeTarget "MyTripUITests" */;
+			buildPhases = (
+				ABCD000200000000000000C3 /* Sources */,
+				ABCD000200000000000000C4 /* Frameworks */,
+				ABCD000200000000000000C5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ABCD000200000000000000C8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				ABCD000200000000000000C2 /* MyTripUITests */,
+			);
+			name = MyTripUITests;
+			packageProductDependencies = (
+			);
+			productName = MyTripUITests;
+			productReference = ABCD000200000000000000C1 /* MyTripUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -95,6 +145,10 @@
 				TargetAttributes = {
 					ABCD000100000000000000AF = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					ABCD000200000000000000C6 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = ABCD000100000000000000AF;
 					};
 				};
 			};
@@ -114,12 +168,20 @@
 			projectRoot = "";
 			targets = (
 				ABCD000100000000000000AF /* MyTrip */,
+				ABCD000200000000000000C6 /* MyTripUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		ABCD000100000000000000B2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ABCD000200000000000000C5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -136,7 +198,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		ABCD000200000000000000C3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		ABCD000200000000000000C8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ABCD000100000000000000AF /* MyTrip */;
+			targetProxy = ABCD000200000000000000C7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		ABCD000100000000000000B5 /* Debug */ = {
@@ -306,6 +383,38 @@
 			};
 			name = Release;
 		};
+		ABCD000200000000000000C9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.amonohno.mytrip.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = MyTrip;
+			};
+			name = Debug;
+		};
+		ABCD000200000000000000CA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.amonohno.mytrip.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = MyTrip;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -323,6 +432,15 @@
 			buildConfigurations = (
 				ABCD000100000000000000B5 /* Debug */,
 				ABCD000100000000000000B6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		ABCD000200000000000000CB /* Build configuration list for PBXNativeTarget "MyTripUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ABCD000200000000000000C9 /* Debug */,
+				ABCD000200000000000000CA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
