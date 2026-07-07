@@ -19,6 +19,8 @@ final class Trip {
     var distanceM: Double
     var steps: Int?
     var statusRaw: String
+    /// アーカイブ日時。nil = 通常表示 (D-03)。エクスポートv1スキーマには含めない
+    var archivedAt: Date?
 
     var status: TripStatus {
         get { TripStatus(rawValue: statusRaw) ?? .done }
@@ -34,6 +36,7 @@ final class Trip {
         self.distanceM = 0
         self.steps = nil
         self.statusRaw = TripStatus.recording.rawValue
+        self.archivedAt = nil
     }
 }
 
@@ -87,5 +90,22 @@ final class Spot {
         self.arrivedAt = arrivedAt
         self.departedAt = departedAt
         self.nameSourceRaw = SpotNameSource.placeholder.rawValue
+    }
+}
+
+/// 旅に添付する写真 (V-07)。端末内(SwiftData外部ストレージ)にのみ保存し、
+/// エクスポートJSONには含めない(ローカルファースト・v1スキーマ不変)。
+@Model
+final class TripPhoto {
+    @Attribute(.unique) var id: UUID
+    var tripId: UUID
+    @Attribute(.externalStorage) var imageData: Data
+    var createdAt: Date
+
+    init(id: UUID = UUID(), tripId: UUID, imageData: Data, createdAt: Date = Date()) {
+        self.id = id
+        self.tripId = tripId
+        self.imageData = imageData
+        self.createdAt = createdAt
     }
 }

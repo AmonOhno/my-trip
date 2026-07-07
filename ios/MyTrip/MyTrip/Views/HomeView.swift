@@ -7,7 +7,11 @@ struct HomeView: View {
     @State private var showRecording = false
 
     private var doneTrips: [Trip] {
-        trips.filter { $0.status == .done }
+        trips.filter { $0.status == .done && $0.archivedAt == nil }
+    }
+
+    private var hasArchived: Bool {
+        trips.contains { $0.archivedAt != nil }
     }
 
     var body: some View {
@@ -36,10 +40,10 @@ struct HomeView: View {
                                 TripRow(trip: trip)
                             }
                         }
-                        if doneTrips.count > 5 {
-                            NavigationLink("すべての旅を見る") {
-                                TripListView()
-                            }
+                    }
+                    if doneTrips.count > 5 || hasArchived {
+                        NavigationLink("すべての旅を見る") {
+                            TripListView()
                         }
                     }
                 }
