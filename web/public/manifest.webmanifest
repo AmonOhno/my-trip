@@ -1,0 +1,25 @@
+{
+  "name": "My Trip — 旅の自動記録",
+  "short_name": "My Trip",
+  "description": "旅の足取りを自動で記録するパーソナル旅行ログ",
+  "lang": "ja",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#faf7f2",
+  "theme_color": "#c2571b",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

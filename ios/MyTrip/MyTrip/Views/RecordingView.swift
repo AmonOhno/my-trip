@@ -1,0 +1,146 @@
+import MapKit
+import SwiftData
+import SwiftUI
+
+struct RecordingView: View {
+    @EnvironmentObject private var recorder: TripRecorder
+    @Environment(\.dismiss) private var dismiss
+    @Query(sort: \TripPoint.timestamp) private var allPoints: [TripPoint]
+    @State private var showStopConfirm = false
+    @State private var stopping = false
+
+    private var points: [TripPoint] {
+        guard let tripId = recorder.currentTrip?.id else { return [] }
+        return allPoints.filter { $0.tripId == tripId }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    map
+                        .listRowInsets(EdgeInsets())
+                    stats
+                    if let message = recorder.errorMessage {
+                        Text(message)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+                }
+
+                Section("立ち寄ったスポット") {
+                    if recorder.spots.isEmpty {
+                        Text("まだスポットはありません。同じ場所に10分ほど滞在すると自動で記録されます。")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(recorder.spots) { spot in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(spot.name)
+                                    .font(.headline)
+                                Text(stayLabel(spot))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        showStopConfirm = true
+                    } label: {
+                        Label("旅を終了する", systemImage: "stop.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(stopping)
+                }
+            }
+            .navigationTitle(elapsedTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "record.circle.fill")
+                            .foregroundStyle(.red)
+                        Text("記録中")
+                            .font(.headline)
+                            .foregroundStyle(.red)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .confirmationDialog("旅を終了しますか?", isPresented: $showStopConfirm, titleVisibility: .visible) {
+                Button("終了する", role: .destructive) {
+                    stopping = true
+                    Task {
+                        _ = await recorder.stop()
+                        stopping = false
+                        dismiss()
+                    }
+                }
+                Button("続ける", role: .cancel) {}
+            } message: {
+                Text("記録が確定し、旅一覧に保存されます。")
+            }
+        }
+        .interactiveDismissDisabled()
+    }
+
+    private var elapsedTitle: String {
+        guard let trip = recorder.currentTrip else { return "" }
+        // lastLocation更新で再描画される簡易表示(秒精度が必要ならTimelineView化)
+        return Formatters.elapsed(Date().timeIntervalSince(trip.startedAt))
+    }
+
+    private var map: some View {
+        Map {
+            UserAnnotation()
+            if points.count > 1 {
+                MapPolyline(coordinates: points.map {
+                    CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)
+                })
+                .stroke(.orange, lineWidth: 4)
+            }
+            ForEach(Array(recorder.spots.enumerated()), id: \.element.id) { index, spot in
+                Marker("\(index + 1). \(spot.name)",
+                       coordinate: CLLocationCoordinate2D(latitude: spot.lat, longitude: spot.lng))
+                    .tint(.orange)
+            }
+        }
+        .mapControls {
+            MapUserLocationButton()
+        }
+        .frame(height: 260)
+    }
+
+    private var stats: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(Formatters.distance(recorder.distanceM))
+                    .font(.title2.bold())
+                    .monospacedDigit()
+                Text("移動距離")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .leading) {
+                Text("\(recorder.spots.count)")
+                    .font(.title2.bold())
+                    .monospacedDigit()
+                Text("スポット")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func stayLabel(_ spot: Spot) -> String {
+        if let departedAt = spot.departedAt {
+            return "\(Formatters.clock(spot.arrivedAt)) – \(Formatters.clock(departedAt))(\(Formatters.duration(departedAt.timeIntervalSince(spot.arrivedAt))))"
+        }
+        return "\(Formatters.clock(spot.arrivedAt)) – 滞在中"
+    }
+}
