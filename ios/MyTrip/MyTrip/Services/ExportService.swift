@@ -118,6 +118,7 @@ enum ExportService {
     static func deleteTrip(id: UUID, context: ModelContext) throws {
         try context.delete(model: TripPoint.self, where: #Predicate { $0.tripId == id })
         try context.delete(model: Spot.self, where: #Predicate { $0.tripId == id })
+        try context.delete(model: TripPhoto.self, where: #Predicate { $0.tripId == id })
         try context.delete(model: Trip.self, where: #Predicate { $0.id == id })
         try context.save()
     }

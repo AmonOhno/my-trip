@@ -1,4 +1,5 @@
 import MapKit
+import PhotosUI
 import SwiftData
 import SwiftUI
 
@@ -9,11 +10,14 @@ struct TripDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \TripPoint.timestamp) private var allPoints: [TripPoint]
     @Query(sort: \Spot.arrivedAt) private var allSpots: [Spot]
+    @Query(sort: \TripPhoto.createdAt) private var allPhotos: [TripPhoto]
 
     @State private var editingSpot: Spot?
     @State private var showTripEdit = false
     @State private var showDeleteConfirm = false
     @State private var mapCamera = MapCameraPosition.automatic
+    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var viewingPhoto: TripPhoto?
 
     private var points: [TripPoint] {
         allPoints.filter { $0.tripId == trip.id }
@@ -21,6 +25,10 @@ struct TripDetailView: View {
 
     private var spots: [Spot] {
         allSpots.filter { $0.tripId == trip.id }
+    }
+
+    private var photos: [TripPhoto] {
+        allPhotos.filter { $0.tripId == trip.id }
     }
 
     private var segments: [TimelineSegment] {
@@ -64,6 +72,16 @@ struct TripDetailView: View {
                 }
             }
 
+            Section("写真") {
+                if !photos.isEmpty {
+                    photoGrid
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                }
+                PhotosPicker(selection: $pickerItems, maxSelectionCount: 20, matching: .images) {
+                    Label("写真を追加", systemImage: "photo.badge.plus")
+                }
+            }
+
             Section("スポットの編集") {
                 ForEach(Array(spots.enumerated()), id: \.element.id) { index, spot in
                     Button {
@@ -91,6 +109,12 @@ struct TripDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Button(trip.archivedAt == nil ? "アーカイブする" : "アーカイブから戻す",
+                       systemImage: trip.archivedAt == nil ? "archivebox" : "tray.and.arrow.up") {
+                    toggleArchive()
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("編集") {
                     showTripEdit = true
                 }
@@ -101,6 +125,15 @@ struct TripDetailView: View {
         }
         .sheet(isPresented: $showTripEdit) {
             TripEditSheet(trip: trip)
+        }
+        .sheet(item: $viewingPhoto) { photo in
+            PhotoViewerSheet(photo: photo) {
+                context.delete(photo)
+                try? context.save()
+            }
+        }
+        .onChange(of: pickerItems) { _, items in
+            addPhotos(items)
         }
         .confirmationDialog("この旅を削除しますか?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("削除する", role: .destructive) {
@@ -182,6 +215,113 @@ struct TripDetailView: View {
                 latitudinalMeters: 600,
                 longitudinalMeters: 600
             ))
+        }
+    }
+
+    // MARK: - 写真 (V-07)
+
+    private var photoGrid: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], spacing: 8) {
+            ForEach(photos) { photo in
+                PhotoThumbnail(photo: photo)
+                    .onTapGesture { viewingPhoto = photo }
+                    .contextMenu {
+                        Button("この写真を削除", systemImage: "trash", role: .destructive) {
+                            context.delete(photo)
+                            try? context.save()
+                        }
+                    }
+            }
+        }
+    }
+
+    private func addPhotos(_ items: [PhotosPickerItem]) {
+        guard !items.isEmpty else { return }
+        Task {
+            for item in items {
+                guard let data = try? await item.loadTransferable(type: Data.self),
+                      let jpeg = Self.downscaledJPEG(data) else { continue }
+                context.insert(TripPhoto(tripId: trip.id, imageData: jpeg))
+            }
+            try? context.save()
+            pickerItems = []
+        }
+    }
+
+    /// 保存サイズを抑えるため長辺2048pxに縮小してJPEG化(端末内保存のみ)
+    private static func downscaledJPEG(_ data: Data, maxDimension: CGFloat = 2048) -> Data? {
+        guard let image = UIImage(data: data) else { return nil }
+        let longest = max(image.size.width, image.size.height)
+        guard longest > maxDimension else { return image.jpegData(compressionQuality: 0.85) }
+        let scale = maxDimension / longest
+        let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let resized = UIGraphicsImageRenderer(size: newSize).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+        return resized.jpegData(compressionQuality: 0.85)
+    }
+
+    // MARK: - アーカイブ (D-03)
+
+    private func toggleArchive() {
+        if trip.archivedAt == nil {
+            trip.archivedAt = Date()
+            try? context.save()
+            dismiss()
+        } else {
+            trip.archivedAt = nil
+            try? context.save()
+        }
+    }
+}
+
+struct PhotoThumbnail: View {
+    let photo: TripPhoto
+
+    var body: some View {
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                if let image = UIImage(data: photo.imageData) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .contentShape(RoundedRectangle(cornerRadius: 12))
+            .accessibilityLabel("旅の写真")
+    }
+}
+
+struct PhotoViewerSheet: View {
+    let photo: TripPhoto
+    var onDelete: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if let image = UIImage(data: photo.imageData) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .background(.black)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("削除", systemImage: "trash", role: .destructive) {
+                        onDelete()
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
         }
     }
 }
