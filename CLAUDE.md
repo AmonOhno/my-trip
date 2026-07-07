@@ -14,7 +14,17 @@ npm run build  # tsc + vite build
 # iOS (ios/MyTrip/)
 xcodebuild -project MyTrip.xcodeproj -scheme MyTrip \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+
+# iOS UIテスト(記録開始〜終了のフロー検証)
+xcodebuild test -project MyTrip.xcodeproj -scheme MyTrip \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -only-testing:MyTripUITests
 ```
+
+## 開発フロー(Issue駆動)
+
+- **Issue駆動開発**: ソース修正・機能追加は必ずGitHub Issueに紐づける。対応するIssueがなければ `gh issue create` で作成してから着手する
+- **最新mainから着手**: 修正は必ず最新のmainブランチを起点にする。`git fetch origin` してから `origin/main` を起点に作業ブランチ(例: `fix/issue-<番号>-<内容>`)を切る
+- コミット・PRでは対象Issueを参照する(PR本文に `Closes #<番号>`)
 
 ## 絶対に守ること
 
