@@ -1,17 +1,28 @@
 import MapKit
+import PhotosUI
 import SwiftData
 import SwiftUI
 
 struct RecordingView: View {
     @EnvironmentObject private var recorder: TripRecorder
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \TripPoint.timestamp) private var allPoints: [TripPoint]
+    @Query(sort: \TripPhoto.createdAt) private var allPhotos: [TripPhoto]
     @State private var showStopConfirm = false
     @State private var stopping = false
+    @State private var editingTrip: Trip?
+    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var viewingPhoto: TripPhoto?
 
     private var points: [TripPoint] {
         guard let tripId = recorder.currentTrip?.id else { return [] }
         return allPoints.filter { $0.tripId == tripId }
+    }
+
+    private var photos: [TripPhoto] {
+        guard let tripId = recorder.currentTrip?.id else { return [] }
+        return allPhotos.filter { $0.tripId == tripId }
     }
 
     var body: some View {
@@ -45,6 +56,38 @@ struct RecordingView: View {
                     }
                 }
 
+                Section("メモ・写真") {
+                    Button {
+                        editingTrip = recorder.currentTrip
+                    } label: {
+                        if let note = recorder.currentTrip?.note, !note.isEmpty {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(note)
+                                    .lineLimit(3)
+                                Text("タップしてメモを編集")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } else {
+                            Label("メモを追加", systemImage: "square.and.pencil")
+                        }
+                    }
+                    .tint(.primary)
+
+                    if !photos.isEmpty {
+                        TripPhotoGrid(photos: photos) { photo in
+                            viewingPhoto = photo
+                        } onDelete: { photo in
+                            context.delete(photo)
+                            try? context.save()
+                        }
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    }
+                    PhotosPicker(selection: $pickerItems, maxSelectionCount: 20, matching: .images) {
+                        Label("写真を追加", systemImage: "photo.badge.plus")
+                    }
+                }
+
                 Section {
                     Button(role: .destructive) {
                         showStopConfirm = true
@@ -68,6 +111,18 @@ struct RecordingView: View {
                     }
                     .accessibilityElement(children: .combine)
                 }
+            }
+            .sheet(item: $editingTrip) { trip in
+                TripEditSheet(trip: trip)
+            }
+            .sheet(item: $viewingPhoto) { photo in
+                PhotoViewerSheet(photo: photo) {
+                    context.delete(photo)
+                    try? context.save()
+                }
+            }
+            .onChange(of: pickerItems) { _, items in
+                addPhotos(items)
             }
             .confirmationDialog("旅を終了しますか?", isPresented: $showStopConfirm, titleVisibility: .visible) {
                 Button("終了する", role: .destructive) {
@@ -135,6 +190,14 @@ struct RecordingView: View {
             Spacer()
         }
         .padding(.vertical, 4)
+    }
+
+    private func addPhotos(_ items: [PhotosPickerItem]) {
+        guard !items.isEmpty, let tripId = recorder.currentTrip?.id else { return }
+        Task {
+            await PhotoImport.save(items, tripId: tripId, context: context)
+            pickerItems = []
+        }
     }
 
     private func stayLabel(_ spot: Spot) -> String {

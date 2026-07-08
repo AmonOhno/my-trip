@@ -221,44 +221,20 @@ struct TripDetailView: View {
     // MARK: - 写真 (V-07)
 
     private var photoGrid: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], spacing: 8) {
-            ForEach(photos) { photo in
-                PhotoThumbnail(photo: photo)
-                    .onTapGesture { viewingPhoto = photo }
-                    .contextMenu {
-                        Button("この写真を削除", systemImage: "trash", role: .destructive) {
-                            context.delete(photo)
-                            try? context.save()
-                        }
-                    }
-            }
+        TripPhotoGrid(photos: photos) { photo in
+            viewingPhoto = photo
+        } onDelete: { photo in
+            context.delete(photo)
+            try? context.save()
         }
     }
 
     private func addPhotos(_ items: [PhotosPickerItem]) {
         guard !items.isEmpty else { return }
         Task {
-            for item in items {
-                guard let data = try? await item.loadTransferable(type: Data.self),
-                      let jpeg = Self.downscaledJPEG(data) else { continue }
-                context.insert(TripPhoto(tripId: trip.id, imageData: jpeg))
-            }
-            try? context.save()
+            await PhotoImport.save(items, tripId: trip.id, context: context)
             pickerItems = []
         }
-    }
-
-    /// 保存サイズを抑えるため長辺2048pxに縮小してJPEG化(端末内保存のみ)
-    private static func downscaledJPEG(_ data: Data, maxDimension: CGFloat = 2048) -> Data? {
-        guard let image = UIImage(data: data) else { return nil }
-        let longest = max(image.size.width, image.size.height)
-        guard longest > maxDimension else { return image.jpegData(compressionQuality: 0.85) }
-        let scale = maxDimension / longest
-        let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-        let resized = UIGraphicsImageRenderer(size: newSize).image { _ in
-            image.draw(in: CGRect(origin: .zero, size: newSize))
-        }
-        return resized.jpegData(compressionQuality: 0.85)
     }
 
     // MARK: - アーカイブ (D-03)
