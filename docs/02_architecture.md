@@ -86,6 +86,7 @@ idle → recording → done
 - `recording` 状態はストレージに永続化(Web: trips.status / iOS: SwiftDataクエリ)。起動時に `recording` の旅があれば自動レジュームする(F-06)
 - Web: `watchPosition` は `enableHighAccuracy: true`。同一地点の連続ポイントは間引き(前回から10m未満 かつ 15秒未満はスキップ)
 - iOS: `allowsBackgroundLocationUpdates = true`、`pausesLocationUpdatesAutomatically = false`、`distanceFilter = 20`
+- ポイント間引き(両OS共通、Web: `core/sampling.ts` / iOS: `TripRecorder.shouldSave`): 前回保存点からの推定速度が 8m/s 以上(電車・車・飛行機などの乗り物移動中)は30秒間隔でのみ保存し、記録中のストレージ書き込み頻度を抑える。徒歩相当では従来どおり「10m以上 または 15秒以上」で保存。判定は保存済みポイントのみに依存するため、復元(F-06)の決定性は保たれる
 
 ## 6. Web版 技術スタック
 

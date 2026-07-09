@@ -1,12 +1,10 @@
 import * as db from "./db";
 import { distanceM } from "./geo";
 import { reverseGeocode } from "./geocode";
+import { shouldSavePoint } from "./sampling";
 import { StayPointDetector, type StayEvent } from "./stayPoint";
 import type { Spot, TrackPoint, Trip } from "./types";
 
-/** 保存する軌跡ポイントの間引き条件 */
-const MIN_POINT_GAP_M = 10;
-const MIN_POINT_GAP_MS = 15_000;
 /** これより精度が悪いポイントは無視する */
 const MAX_ACCURACY_M = 80;
 
@@ -163,13 +161,7 @@ class TripRecorder {
     };
 
     const prev = this.lastSavedPoint;
-    if (
-      prev &&
-      distanceM(prev, point) < MIN_POINT_GAP_M &&
-      point.timestamp - prev.timestamp < MIN_POINT_GAP_MS
-    ) {
-      return;
-    }
+    if (!shouldSavePoint(prev, point)) return;
 
     let total = this.state.distanceM;
     if (prev) total += distanceM(prev, point);
