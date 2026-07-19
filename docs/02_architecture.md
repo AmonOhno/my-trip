@@ -73,9 +73,33 @@ Spot {
 }
 ```
 
-- Web: IndexedDB に `trips` / `points` / `spots` の3ストア(`tripId` インデックス)
-- iOS: SwiftData の `@Model` 3クラス(同フィールド)
+- Web: IndexedDB に `trips` / `points` / `spots` の3ストア(`tripId` インデックス)。v2で `plans` / `planItems` を追加
+- iOS: SwiftData の `@Model` 3クラス(同フィールド)+ ローカル専用モデル(TripPhoto / TripPlan / PlanItem)
 - タイムラインの「移動セグメント」は保存せず、表示時にスポット列と軌跡から導出する(導出可能なものは保存しない)
+
+### 4.1 旅の計画(ローカル専用・エクスポート対象外)
+
+計画 (P-01〜P-05) は端末ローカルにのみ保存し、`my-trip-export/v1` には**含めない**(スキーマ不変)。
+
+```ts
+TripPlan {
+  id: string (uuid)
+  title: string
+  note: string
+  startDate: number   // 開始日のローカル0時 (epoch ms)
+  endDate: number     // 終了日のローカル0時。startDate 以上
+  createdAt: number
+  tripId: string | null  // この計画から記録した旅。未実行は null
+}
+PlanItem {
+  id, planId, name, note,
+  order: number       // 表示順 (0始まり)
+}
+```
+
+- 進行状態(これから / 期間中 / 過去)は保存せず、日単位で導出する。Web `core/plan.ts` の `planPhase` と iOS `TripPlan.phase(at:)` は同一ロジック(両OSで揃える)
+- 「この計画で旅をはじめる」で記録開始時に計画タイトルを旅タイトルへ引き継ぎ、`tripId` を設定する
+- 旅を削除したときは、紐づく計画の `tripId` を null に戻す(参照切れ防止)
 
 ## 5. 記録セッションのライフサイクル
 

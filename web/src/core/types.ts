@@ -33,6 +33,33 @@ export interface Spot {
   nameSource: SpotNameSource;
 }
 
+/**
+ * 旅の計画。ローカル保存のみで `my-trip-export/v1` スキーマには含めない
+ * (docs/01_requirements.md §3.4)
+ */
+export interface TripPlan {
+  id: string;
+  title: string;
+  note: string;
+  /** 開始日(その日のローカル0時, epoch ms) */
+  startDate: number;
+  /** 終了日(その日のローカル0時, epoch ms)。startDate 以上 */
+  endDate: number;
+  createdAt: number;
+  /** この計画から記録した旅のID。未実行は null */
+  tripId: string | null;
+}
+
+/** 計画の「行きたい場所」1件 */
+export interface PlanItem {
+  id: string;
+  planId: string;
+  name: string;
+  note: string;
+  /** 一覧内の表示順 (0始まり) */
+  order: number;
+}
+
 /** タイムライン表示用(保存せず導出する) */
 export type TimelineSegment =
   | { kind: "stay"; spot: Spot }
