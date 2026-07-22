@@ -69,6 +69,15 @@ enum Formatters {
         date.formatted(.dateTime.year().month().day().weekday(.abbreviated).locale(Locale(identifier: "ja_JP")))
     }
 
+    /// 計画の期間表示。日帰りは1日分、複数日は「M/D(曜)〜M/D(曜)」(Web版 formatDateRange と共通)
+    static func dateRange(_ start: Date, _ end: Date) -> String {
+        if Calendar.current.isDate(start, inSameDayAs: end) { return day(start) }
+        let short: (Date) -> String = {
+            $0.formatted(.dateTime.month(.defaultDigits).day().weekday(.abbreviated).locale(Locale(identifier: "ja_JP")))
+        }
+        return "\(short(start))〜\(short(end))"
+    }
+
     static func elapsed(_ interval: TimeInterval) -> String {
         let s = max(0, Int(interval))
         return String(format: "%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60)

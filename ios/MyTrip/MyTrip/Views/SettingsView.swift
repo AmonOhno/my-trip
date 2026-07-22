@@ -58,6 +58,8 @@ struct SettingsView: View {
                 try? context.delete(model: TripPoint.self)
                 try? context.delete(model: Spot.self)
                 try? context.delete(model: Trip.self)
+                try? context.delete(model: PlanItem.self)
+                try? context.delete(model: TripPlan.self)
                 try? context.save()
                 message = "すべてのデータを削除しました。"
             }

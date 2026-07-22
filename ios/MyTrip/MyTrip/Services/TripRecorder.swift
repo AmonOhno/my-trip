@@ -86,13 +86,16 @@ final class TripRecorder: NSObject, ObservableObject {
         startUpdating()
     }
 
-    func start() {
-        guard let context, currentTrip == nil else { return }
+    /// 記録を開始する。計画から開始する場合はタイトルを引き継ぐ
+    @discardableResult
+    func start(title: String? = nil) -> Trip? {
+        guard let context, currentTrip == nil else { return nil }
         let now = Date()
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ja_JP")
         formatter.dateFormat = "yyyy/M/d"
-        let trip = Trip(title: "\(formatter.string(from: now)) の旅", startedAt: now)
+        let trimmed = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let trip = Trip(title: trimmed.isEmpty ? "\(formatter.string(from: now)) の旅" : trimmed, startedAt: now)
         context.insert(trip)
         try? context.save()
 
@@ -107,6 +110,7 @@ final class TripRecorder: NSObject, ObservableObject {
         distanceM = 0
         errorMessage = nil
         startUpdating()
+        return trip
     }
 
     func stop() async -> Trip? {

@@ -120,6 +120,11 @@ enum ExportService {
         try context.delete(model: Spot.self, where: #Predicate { $0.tripId == id })
         try context.delete(model: TripPhoto.self, where: #Predicate { $0.tripId == id })
         try context.delete(model: Trip.self, where: #Predicate { $0.id == id })
+        // 削除した旅に紐づく計画は「未実行」へ戻す(参照切れ防止)
+        let linked = try context.fetch(FetchDescriptor<TripPlan>(predicate: #Predicate { $0.tripId == id }))
+        for plan in linked {
+            plan.tripId = nil
+        }
         try context.save()
     }
 }

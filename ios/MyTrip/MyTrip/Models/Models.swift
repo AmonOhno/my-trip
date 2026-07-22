@@ -93,6 +93,68 @@ final class Spot {
     }
 }
 
+/// 旅の計画 (P-01)。Web版 core/types.ts の TripPlan と共通フィールド。
+/// 端末内にのみ保存し、エクスポートv1スキーマには含めない。
+@Model
+final class TripPlan {
+    @Attribute(.unique) var id: UUID
+    var title: String
+    var note: String
+    /// 開始日(その日の0時)
+    var startDate: Date
+    /// 終了日(その日の0時)。startDate 以上
+    var endDate: Date
+    var createdAt: Date
+    /// この計画から記録した旅のID。未実行は nil
+    var tripId: UUID?
+
+    init(id: UUID = UUID(), title: String, startDate: Date, endDate: Date, createdAt: Date = Date()) {
+        self.id = id
+        self.title = title
+        self.note = ""
+        self.startDate = startDate
+        self.endDate = endDate
+        self.createdAt = createdAt
+        self.tripId = nil
+    }
+}
+
+/// 計画の進行状態(日単位で判定)。Web版 core/plan.ts の planPhase と同一ロジック
+enum PlanPhase {
+    case ongoing
+    case upcoming
+    case past
+}
+
+extension TripPlan {
+    func phase(at now: Date = Date()) -> PlanPhase {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: now)
+        if today < cal.startOfDay(for: startDate) { return .upcoming }
+        if today > cal.startOfDay(for: endDate) { return .past }
+        return .ongoing
+    }
+}
+
+/// 計画の「行きたい場所」1件 (P-02)
+@Model
+final class PlanItem {
+    @Attribute(.unique) var id: UUID
+    var planId: UUID
+    var name: String
+    var note: String
+    /// 一覧内の表示順 (0始まり)
+    var order: Int
+
+    init(id: UUID = UUID(), planId: UUID, name: String, order: Int) {
+        self.id = id
+        self.planId = planId
+        self.name = name
+        self.note = ""
+        self.order = order
+    }
+}
+
 /// 旅に添付する写真 (V-07)。端末内(SwiftData外部ストレージ)にのみ保存し、
 /// エクスポートJSONには含めない(ローカルファースト・v1スキーマ不変)。
 @Model

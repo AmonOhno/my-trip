@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { recorder } from "../core/recorder";
 import { HomePage } from "../pages/HomePage";
+import { PlanDetailPage } from "../pages/PlanDetailPage";
+import { PlanListPage } from "../pages/PlanListPage";
 import { RecordingPage } from "../pages/RecordingPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { TripDetailPage } from "../pages/TripDetailPage";
@@ -24,6 +26,10 @@ export function App() {
       return <TripListPage />;
     case "trip":
       return <TripDetailPage tripId={route.id} />;
+    case "plans":
+      return <PlanListPage />;
+    case "plan":
+      return <PlanDetailPage planId={route.id} />;
     case "settings":
       return <SettingsPage />;
   }

@@ -5,15 +5,20 @@ export type Route =
   | { name: "recording" }
   | { name: "trips" }
   | { name: "trip"; id: string }
+  | { name: "plans" }
+  | { name: "plan"; id: string }
   | { name: "settings" };
 
 function parse(hash: string): Route {
   const path = hash.replace(/^#/, "");
   if (path === "/recording") return { name: "recording" };
   if (path === "/trips") return { name: "trips" };
+  if (path === "/plans") return { name: "plans" };
   if (path === "/settings") return { name: "settings" };
   const m = /^\/trips\/([^/]+)$/.exec(path);
   if (m) return { name: "trip", id: m[1] };
+  const p = /^\/plans\/([^/]+)$/.exec(path);
+  if (p) return { name: "plan", id: p[1] };
   return { name: "home" };
 }
 

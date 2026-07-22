@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { Spot, TrackPoint, Trip } from "./types";
+import type { PlanItem, Spot, TrackPoint, Trip, TripPlan } from "./types";
 
 interface MyTripDB extends DBSchema {
   trips: {
@@ -17,19 +17,35 @@ interface MyTripDB extends DBSchema {
     value: Spot;
     indexes: { byTrip: string };
   };
+  plans: {
+    key: string;
+    value: TripPlan;
+  };
+  planItems: {
+    key: string;
+    value: PlanItem;
+    indexes: { byPlan: string };
+  };
 }
 
 let dbPromise: Promise<IDBPDatabase<MyTripDB>> | null = null;
 
 function db(): Promise<IDBPDatabase<MyTripDB>> {
-  dbPromise ??= openDB<MyTripDB>("my-trip", 1, {
-    upgrade(d) {
-      const trips = d.createObjectStore("trips", { keyPath: "id" });
-      trips.createIndex("byStatus", "status");
-      const points = d.createObjectStore("points", { autoIncrement: true });
-      points.createIndex("byTrip", "tripId");
-      const spots = d.createObjectStore("spots", { keyPath: "id" });
-      spots.createIndex("byTrip", "tripId");
+  dbPromise ??= openDB<MyTripDB>("my-trip", 2, {
+    upgrade(d, oldVersion) {
+      if (oldVersion < 1) {
+        const trips = d.createObjectStore("trips", { keyPath: "id" });
+        trips.createIndex("byStatus", "status");
+        const points = d.createObjectStore("points", { autoIncrement: true });
+        points.createIndex("byTrip", "tripId");
+        const spots = d.createObjectStore("spots", { keyPath: "id" });
+        spots.createIndex("byTrip", "tripId");
+      }
+      if (oldVersion < 2) {
+        d.createObjectStore("plans", { keyPath: "id" });
+        const items = d.createObjectStore("planItems", { keyPath: "id" });
+        items.createIndex("byPlan", "planId");
+      }
     },
   });
   return dbPromise;
@@ -81,7 +97,7 @@ export async function listSpots(tripId: string): Promise<Spot[]> {
 
 export async function deleteTrip(id: string): Promise<void> {
   const d = await db();
-  const tx = d.transaction(["trips", "points", "spots"], "readwrite");
+  const tx = d.transaction(["trips", "points", "spots", "plans"], "readwrite");
   await tx.objectStore("trips").delete(id);
   for (const store of ["points", "spots"] as const) {
     const index = tx.objectStore(store).index("byTrip");
@@ -91,16 +107,64 @@ export async function deleteTrip(id: string): Promise<void> {
       cursor = await cursor.continue();
     }
   }
+  // 削除した旅に紐づく計画は「未実行」へ戻す(参照切れ防止)
+  let planCursor = await tx.objectStore("plans").openCursor();
+  while (planCursor) {
+    if (planCursor.value.tripId === id) {
+      await planCursor.update({ ...planCursor.value, tripId: null });
+    }
+    planCursor = await planCursor.continue();
+  }
   await tx.done;
+}
+
+export async function putPlan(plan: TripPlan): Promise<void> {
+  await (await db()).put("plans", plan);
+}
+
+export async function getPlan(id: string): Promise<TripPlan | undefined> {
+  return (await db()).get("plans", id);
+}
+
+export async function listPlans(): Promise<TripPlan[]> {
+  return (await db()).getAll("plans");
+}
+
+export async function deletePlan(id: string): Promise<void> {
+  const d = await db();
+  const tx = d.transaction(["plans", "planItems"], "readwrite");
+  await tx.objectStore("plans").delete(id);
+  const index = tx.objectStore("planItems").index("byPlan");
+  let cursor = await index.openCursor(id);
+  while (cursor) {
+    await cursor.delete();
+    cursor = await cursor.continue();
+  }
+  await tx.done;
+}
+
+export async function putPlanItem(item: PlanItem): Promise<void> {
+  await (await db()).put("planItems", item);
+}
+
+export async function deletePlanItem(id: string): Promise<void> {
+  await (await db()).delete("planItems", id);
+}
+
+export async function listPlanItems(planId: string): Promise<PlanItem[]> {
+  const items = await (await db()).getAllFromIndex("planItems", "byPlan", planId);
+  return items.sort((a, b) => a.order - b.order);
 }
 
 export async function clearAll(): Promise<void> {
   const d = await db();
-  const tx = d.transaction(["trips", "points", "spots"], "readwrite");
+  const tx = d.transaction(["trips", "points", "spots", "plans", "planItems"], "readwrite");
   await Promise.all([
     tx.objectStore("trips").clear(),
     tx.objectStore("points").clear(),
     tx.objectStore("spots").clear(),
+    tx.objectStore("plans").clear(),
+    tx.objectStore("planItems").clear(),
   ]);
   await tx.done;
 }

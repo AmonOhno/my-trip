@@ -4,10 +4,16 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var recorder: TripRecorder
     @Query(sort: \Trip.startedAt, order: .reverse) private var trips: [Trip]
+    @Query(sort: \TripPlan.startDate) private var plans: [TripPlan]
     @State private var showRecording = false
 
     private var doneTrips: [Trip] {
         trips.filter { $0.status == .done && $0.archivedAt == nil }
+    }
+
+    /// ホームに出す計画: 進行中・これから のみ
+    private var activePlans: [TripPlan] {
+        plans.filter { $0.phase() != .past }
     }
 
     private var hasArchived: Bool {
@@ -28,6 +34,24 @@ struct HomeView: View {
                     }
                 } footer: {
                     Text("「旅をはじめる」を押すと、訪れたスポットと移動の足取りを自動で記録します。記録中の操作は不要です。")
+                }
+
+                Section("旅の計画") {
+                    if activePlans.isEmpty {
+                        Text("次の旅の計画をたてて、行きたい場所をメモしておけます。")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(activePlans.prefix(2)) { plan in
+                            NavigationLink {
+                                PlanDetailView(plan: plan)
+                            } label: {
+                                PlanRow(plan: plan)
+                            }
+                        }
+                    }
+                    NavigationLink(activePlans.isEmpty ? "計画をたてる" : "すべての計画を見る") {
+                        PlanListView()
+                    }
                 }
 
                 Section("最近の旅") {

@@ -27,6 +27,20 @@ export function formatDate(epochMs: number): string {
   });
 }
 
+/** 計画の期間表示。日帰りは1日分、複数日は「M/D(曜)〜M/D(曜)」 */
+export function formatDateRange(startMs: number, endMs: number): string {
+  const short = (ms: number) =>
+    new Date(ms).toLocaleDateString("ja-JP", {
+      month: "numeric",
+      day: "numeric",
+      weekday: "short",
+    });
+  if (new Date(startMs).toDateString() === new Date(endMs).toDateString()) {
+    return formatDate(startMs);
+  }
+  return `${short(startMs)}〜${short(endMs)}`;
+}
+
 /** 経過時間 HH:MM:SS */
 export function formatElapsed(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));

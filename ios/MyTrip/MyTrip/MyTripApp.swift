@@ -8,7 +8,7 @@ struct MyTripApp: App {
 
     init() {
         do {
-            container = try ModelContainer(for: Trip.self, TripPoint.self, Spot.self, TripPhoto.self)
+            container = try ModelContainer(for: Trip.self, TripPoint.self, Spot.self, TripPhoto.self, TripPlan.self, PlanItem.self)
         } catch {
             fatalError("SwiftDataの初期化に失敗しました: \(error)")
         }

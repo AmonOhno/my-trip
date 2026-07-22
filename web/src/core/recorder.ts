@@ -84,16 +84,17 @@ class TripRecorder {
     this.startWatching();
   }
 
-  async start(): Promise<void> {
-    if (this.state.status === "recording" || this.state.status === "starting") return;
+  /** 記録を開始する。計画から開始する場合はタイトルを引き継ぐ */
+  async start(options?: { title?: string }): Promise<Trip | null> {
+    if (this.state.status === "recording" || this.state.status === "starting") return null;
     if (!("geolocation" in navigator)) {
       this.setState({ ...IDLE, status: "error", errorMessage: "この端末では位置情報が利用できません。" });
-      return;
+      return null;
     }
     const now = Date.now();
     const trip: Trip = {
       id: crypto.randomUUID(),
-      title: `${new Date(now).toLocaleDateString("ja-JP")} の旅`,
+      title: options?.title?.trim() || `${new Date(now).toLocaleDateString("ja-JP")} の旅`,
       note: "",
       startedAt: now,
       endedAt: null,
@@ -109,6 +110,7 @@ class TripRecorder {
     await db.putTrip(trip);
     this.setState({ ...IDLE, status: "recording", trip });
     this.startWatching();
+    return trip;
   }
 
   async stop(): Promise<Trip | null> {
