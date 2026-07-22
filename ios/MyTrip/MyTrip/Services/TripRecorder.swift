@@ -6,10 +6,14 @@ import SwiftData
 /// 軌跡保存・滞在スポット検出・逆ジオコーディングを行う。
 @MainActor
 final class TripRecorder: NSObject, ObservableObject {
-    /// 保存する軌跡ポイントの間引き条件(Web版 recorder.ts と共通)
+    /// 保存する軌跡ポイントの間引き条件(Web版 sampling.ts と共通)
     private static let minPointGapM: CLLocationDistance = 10
     private static let minPointGap: TimeInterval = 15
     private static let maxAccuracyM: CLLocationDistance = 80
+    /// これ以上の推定速度は乗り物(電車・車・飛行機など)での移動とみなす
+    private static let vehicleSpeedMps: Double = 8
+    /// 乗り物移動中の保存間隔。書き込み頻度を下げて発熱・電池消費を抑える (#9)
+    private static let vehicleMinPointGap: TimeInterval = 30
 
     @Published private(set) var currentTrip: Trip?
     @Published private(set) var spots: [Spot] = []
@@ -152,11 +156,7 @@ final class TripRecorder: NSObject, ObservableObject {
         guard let context, let trip = currentTrip else { return }
         guard location.horizontalAccuracy >= 0, location.horizontalAccuracy <= Self.maxAccuracyM else { return }
 
-        if let prevLoc = lastSavedLocation, let prevAt = lastSavedAt,
-           prevLoc.distance(from: location) < Self.minPointGapM,
-           location.timestamp.timeIntervalSince(prevAt) < Self.minPointGap {
-            return
-        }
+        if !shouldSave(location: location) { return }
 
         if let prevLoc = lastSavedLocation {
             distanceM += prevLoc.distance(from: location)
@@ -176,10 +176,26 @@ final class TripRecorder: NSObject, ObservableObject {
 
         if let event = detector.addPoint(location: location, timestamp: location.timestamp) {
             apply(event: event, tripId: trip.id)
+            // スポットが変化したときだけ再フェッチする(毎ポイントの全件フェッチは発熱の一因 #9)
+            spots = fetchSpots(tripId: trip.id)
         }
         try? context.save()
-        spots = fetchSpots(tripId: trip.id)
         errorMessage = nil
+    }
+
+    /// 新しいポイントを保存すべきか判定する(Web版 sampling.ts の shouldSavePoint と同一ロジック)。
+    /// - 徒歩相当: 前回保存点から10m以上 または 15秒以上で保存
+    /// - 乗り物相当(推定速度 8m/s 以上): 30秒間隔でのみ保存
+    /// 判定は保存済みポイントのみから決まるため、復元(F-06)の決定性を壊さない。
+    private func shouldSave(location: CLLocation) -> Bool {
+        guard let prevLoc = lastSavedLocation, let prevAt = lastSavedAt else { return true }
+        let dist = prevLoc.distance(from: location)
+        let dt = location.timestamp.timeIntervalSince(prevAt)
+        let speedMps = dt > 0 ? dist / dt : .infinity
+        if speedMps >= Self.vehicleSpeedMps {
+            return dt >= Self.vehicleMinPointGap
+        }
+        return dist >= Self.minPointGapM || dt >= Self.minPointGap
     }
 
     private func apply(event: StayEvent, tripId: UUID) {
