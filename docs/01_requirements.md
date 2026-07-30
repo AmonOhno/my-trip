@@ -80,7 +80,7 @@
 
 | ID | 要件 |
 |----|------|
-| N-01 | **コスト0円**: 地図タイルはOSM、逆ジオコーディングはNominatim(利用ポリシー遵守: 1req/秒以下、キャッシュ必須)、ホスティングは静的(GitHub Pages等)、バックエンドなし |
+| N-01 | **コスト0円**: 課金の発生するAPIを使わない。Web版の地図タイルはOSM、逆ジオコーディングはNominatim(利用ポリシー遵守: 1req/秒以下、キャッシュ必須)。iOS版の地図は Google Maps SDK for iOS(SKU「Maps SDK」は無制限・無料。APIキーは必須だがリポジトリには含めず、未設定時はMapKitへフォールバック)、逆ジオコーディングはCLGeocoder。従量課金SKU(Geocoding API / Places API 等)は使わない。ホスティングは静的(GitHub Pages等)、バックエンドなし |
 | N-02 | プライバシー: 位置情報は端末外に送信しない(逆ジオコーディングの座標送信のみ。設定でオフ可) |
 | N-03 | オフライン耐性: 記録はオフラインでも動作(逆ジオコーディングのみ後回し)。Web版はPWAとしてインストール可 |
 | N-04 | バッテリー: iOSは `desiredAccuracy` と距離フィルタで消費を抑制 |
@@ -101,7 +101,7 @@
 | 技術 | TypeScript + React + Vite (PWA) | Swift + SwiftUI |
 | 位置情報 | Geolocation API (`watchPosition`) | CoreLocation (Background Updates) |
 | Health | 不可(制約として明記) | HealthKit(歩数・距離) |
-| 地図 | Leaflet + OpenStreetMap | MapKit(Apple純正・無料) |
+| 地図 | Leaflet + OpenStreetMap | Google Maps SDK(無制限・無料SKU。APIキー未設定時はMapKit) |
 | 保存 | IndexedDB (idb) | SwiftData |
 | 配布 | 静的ホスティング(無料) | App Store(開発者プログラム$99/年のみ、コード側コスト0) |
 

@@ -16,7 +16,7 @@
 │    └─ ReverseGeocoder (Nominatim+cache)   │   │    ├─ ReverseGeocoder (CLGeocoder)  │
 │    │                                      │   │    └─ HealthKit (歩数)              │
 │  Storage: IndexedDB (idb)                 │   │  Storage: SwiftData                 │
-│  Map: Leaflet + OSM tiles                 │   │  Map: MapKit                        │
+│  Map: Leaflet + OSM tiles                 │   │  Map: Google Maps SDK (→MapKit)     │
 └───────────────────────────────────────────┘   └─────────────────────────────────────┘
                     │                                         │
                     └────────── 共通エクスポートJSON ────────────┘
@@ -46,6 +46,22 @@
 | 失敗時 | 「スポット N」の仮名、後から手動編集可 | 同左 |
 
 Nominatim呼び出しはキューで直列化し、失敗してもスポット記録自体は成立する(名前だけ後付け)。座標送信を望まないユーザー向けに設定でオフにできる。
+
+## 3.5 地図描画とAPIキー(iOS / Issue #6)
+
+iOSの地図は **Google Maps SDK for iOS**(`Views/TripMapView.swift`)。使用するのは地図表示SKU「Maps SDK (Mobile Native Dynamic Maps)」のみで、これは**無制限・無料**(月間キャップなし)。逆ジオコーディングを Geocoding API に置き換えると従量課金SKUになるため、**CLGeocoder のまま**にしている。結果としてアプリから課金が発生する経路は存在しない。
+
+APIキーの扱い:
+
+| 読み込み順 | 場所 |
+|---|---|
+| 1 | `ios/MyTrip/MyTrip/Secrets.plist` の `GoogleMapsAPIKey`(`.gitignore` 済み。`Secrets.example.plist` をコピーして作る) |
+| 2 | `Info.plist` の `GoogleMapsAPIKey` |
+| 3 | 環境変数 `GOOGLE_MAPS_API_KEY`(シミュレータ検証用) |
+
+キーが見つからない場合は `GoogleMapsConfig.isEnabled == false` となり、**MapKit で描画**する。クローンしただけの状態でもビルド・実行・UIテストが通る。
+
+`TripMapView` はどちらの実装でも同じ入力(軌跡・ピン・現在地追従・フォーカス)を受け取るため、呼び出し側は描画エンジンを意識しない。
 
 ## 4. データモデル(共通スキーマ)
 
@@ -129,7 +145,7 @@ idle → recording → done
 |---|---|
 | UI | SwiftUI (iOS 17+) |
 | 位置 | CoreLocation(Always許可、Background Modes: location) |
-| 地図 | MapKit(MapPolyline + Marker) |
+| 地図 | Google Maps SDK for iOS(`TripMapView`。APIキー未設定時はMapKitへフォールバック) |
 | Health | HealthKit(stepCount / distanceWalkingRunning の期間集計、読み取りのみ) |
 | 保存 | SwiftData |
 | プロジェクト | Xcode 16 形式(fileSystemSynchronizedGroups)— フォルダ同期でファイル追加が容易 |
@@ -155,5 +171,6 @@ my-trip/
 ## 9. セキュリティ / プライバシー設計
 
 - 位置データはローカル保存のみ。外部送信はNominatim逆ジオコーディングの座標のみ(設定で無効化可)
+- 地図タイルの取得では表示中の範囲がタイル提供元(OSM / Google)に渡る。これは地図描画に不可避な通信で、記録した軌跡・スポットそのものは送信しない
 - iOS: `NSLocationAlwaysAndWhenInUseUsageDescription` 等で用途を明記。HealthKitは読み取り専用
 - エクスポートはユーザー操作時のみ・ローカルファイル生成のみ

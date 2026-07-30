@@ -1,4 +1,4 @@
-import MapKit
+import CoreLocation
 import PhotosUI
 import SwiftData
 import SwiftUI
@@ -15,7 +15,8 @@ struct TripDetailView: View {
     @State private var editingSpot: Spot?
     @State private var showTripEdit = false
     @State private var showDeleteConfirm = false
-    @State private var mapCamera = MapCameraPosition.automatic
+    @State private var mapFocus: TripMapFocus?
+    @State private var focusToken = 0
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var viewingPhoto: TripPhoto?
 
@@ -147,19 +148,18 @@ struct TripDetailView: View {
     }
 
     private var map: some View {
-        Map(position: $mapCamera) {
-            if points.count > 1 {
-                MapPolyline(coordinates: points.map {
-                    CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)
-                })
-                .stroke(.orange, lineWidth: 4)
-            }
-            ForEach(Array(spots.enumerated()), id: \.element.id) { index, spot in
-                Marker("\(index + 1). \(spot.name)",
-                       coordinate: CLLocationCoordinate2D(latitude: spot.lat, longitude: spot.lng))
-                    .tint(.orange)
-            }
-        }
+        TripMapView(
+            track: points.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) },
+            markers: spots.enumerated().map { index, spot in
+                TripMapMarker(
+                    id: spot.id.uuidString,
+                    title: "\(index + 1). \(spot.name)",
+                    latitude: spot.lat,
+                    longitude: spot.lng
+                )
+            },
+            focus: mapFocus
+        )
         .frame(height: 280)
     }
 
@@ -209,13 +209,8 @@ struct TripDetailView: View {
     }
 
     private func focus(on spot: Spot) {
-        withAnimation {
-            mapCamera = .region(MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: spot.lat, longitude: spot.lng),
-                latitudinalMeters: 600,
-                longitudinalMeters: 600
-            ))
-        }
+        focusToken += 1
+        mapFocus = TripMapFocus(latitude: spot.lat, longitude: spot.lng, token: focusToken)
     }
 
     // MARK: - 写真 (V-07)

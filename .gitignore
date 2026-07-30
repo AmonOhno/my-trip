@@ -5,8 +5,12 @@ web/dist/
 # Xcode / iOS
 ios/**/xcuserdata/
 ios/**/*.xcworkspace/xcuserdata/
+ios/**/swiftpm/configuration/
 DerivedData/
 *.ipa
+
+# Google Maps APIキー(Secrets.example.plist をコピーして作る)
+ios/MyTrip/MyTrip/Secrets.plist
 
 # OS
 .DS_Store

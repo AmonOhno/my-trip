@@ -1,4 +1,4 @@
-import MapKit
+import CoreLocation
 import PhotosUI
 import SwiftData
 import SwiftUI
@@ -148,23 +148,19 @@ struct RecordingView: View {
     }
 
     private var map: some View {
-        Map {
-            UserAnnotation()
-            if points.count > 1 {
-                MapPolyline(coordinates: points.map {
-                    CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)
-                })
-                .stroke(.orange, lineWidth: 4)
-            }
-            ForEach(Array(recorder.spots.enumerated()), id: \.element.id) { index, spot in
-                Marker("\(index + 1). \(spot.name)",
-                       coordinate: CLLocationCoordinate2D(latitude: spot.lat, longitude: spot.lng))
-                    .tint(.orange)
-            }
-        }
-        .mapControls {
-            MapUserLocationButton()
-        }
+        TripMapView(
+            track: points.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng) },
+            markers: recorder.spots.enumerated().map { index, spot in
+                TripMapMarker(
+                    id: spot.id.uuidString,
+                    title: "\(index + 1). \(spot.name)",
+                    latitude: spot.lat,
+                    longitude: spot.lng
+                )
+            },
+            showsUserLocation: true,
+            follow: recorder.lastLocation?.coordinate
+        )
         .frame(height: 260)
     }
 
