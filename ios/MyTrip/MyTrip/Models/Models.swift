@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import SwiftData
 
@@ -145,13 +146,24 @@ final class PlanItem {
     var note: String
     /// 一覧内の表示順 (0始まり)
     var order: Int
+    /// 地図上の位置。未設定(名前だけの場所)は nil
+    var lat: Double?
+    var lng: Double?
 
-    init(id: UUID = UUID(), planId: UUID, name: String, order: Int) {
+    init(id: UUID = UUID(), planId: UUID, name: String, order: Int, lat: Double? = nil, lng: Double? = nil) {
         self.id = id
         self.planId = planId
         self.name = name
         self.note = ""
         self.order = order
+        self.lat = lat
+        self.lng = lng
+    }
+
+    /// 地図に出せる位置が入っているか
+    var coordinate: CLLocationCoordinate2D? {
+        guard let lat, let lng else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lng)
     }
 }
 

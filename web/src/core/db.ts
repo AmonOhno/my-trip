@@ -153,7 +153,12 @@ export async function deletePlanItem(id: string): Promise<void> {
 
 export async function listPlanItems(planId: string): Promise<PlanItem[]> {
   const items = await (await db()).getAllFromIndex("planItems", "byPlan", planId);
-  return items.sort((a, b) => a.order - b.order);
+  // 座標フィールドが追加される前に保存された場所は undefined のことがある
+  return items
+    .map((item) => (item.lat === undefined || item.lng === undefined
+      ? { ...item, lat: item.lat ?? null, lng: item.lng ?? null }
+      : item))
+    .sort((a, b) => a.order - b.order);
 }
 
 export async function clearAll(): Promise<void> {

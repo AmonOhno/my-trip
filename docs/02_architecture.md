@@ -94,10 +94,15 @@ TripPlan {
 PlanItem {
   id, planId, name, note,
   order: number       // 表示順 (0始まり)
+  lat: number | null  // 地図上の位置。名前だけの場所は null
+  lng: number | null
 }
 ```
 
 - 進行状態(これから / 期間中 / 過去)は保存せず、日単位で導出する。Web `core/plan.ts` の `planPhase` と iOS `TripPlan.phase(at:)` は同一ロジック(両OSで揃える)
+- 行きたい場所の位置(`lat`/`lng`)は**任意**。ピンの番号付け(Web `core/plan.ts` の `planPins` / iOS `PlanPins.make`)は両OSで同一ルール: order順に数えた一覧の表示番号を使い、位置のない場所も番号を消費する
+- 地名検索は無料のものだけを使う。Web は Nominatim `/search`(逆ジオコーディングと**同じキューを共有**して1req/秒以下を守り、同一語はセッション内キャッシュ)、iOS は `MKLocalSearch`(Apple純正・無料)
+- 地図タップで登録した場所の名前は逆ジオコーディングで補完する(Web: `reverseGeocode` / iOS: `PlaceNaming`)。取得できなくても手入力で登録できる
 - 「この計画で旅をはじめる」で記録開始時に計画タイトルを旅タイトルへ引き継ぎ、`tripId` を設定する
 - 旅を削除したときは、紐づく計画の `tripId` を null に戻す(参照切れ防止)
 

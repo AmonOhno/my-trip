@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   activePlans,
   fromDateInputValue,
+  hasLocation,
   movePlanItem,
   planPhase,
+  planPins,
+  planPinsBounds,
   sortPlansForList,
   startOfDay,
   toDateInputValue,
@@ -78,7 +81,7 @@ describe("sortPlansForList / activePlans", () => {
 
 describe("movePlanItem", () => {
   function item(id: string, order: number): PlanItem {
-    return { id, planId: "p", name: id, note: "", order };
+    return { id, planId: "p", name: id, note: "", order, lat: null, lng: null };
   }
   const items = [item("a", 0), item("b", 1), item("c", 2)];
 
@@ -111,5 +114,49 @@ describe("date input 変換", () => {
   it("不正な値は null", () => {
     expect(fromDateInputValue("")).toBeNull();
     expect(fromDateInputValue("2026-7-5")).toBeNull();
+  });
+});
+
+describe("planPins", () => {
+  function item(id: string, order: number, lat: number | null = null, lng: number | null = null): PlanItem {
+    return { id, planId: "p", name: id, note: "", order, lat, lng };
+  }
+
+  it("位置のある場所だけをピンにする", () => {
+    const pins = planPins([item("a", 0, 35.1, 139.1), item("b", 1), item("c", 2, 35.3, 139.3)]);
+    expect(pins.map((p) => p.id)).toEqual(["a", "c"]);
+  });
+
+  it("ピン番号は一覧の並び(位置なしも数える)に揃う", () => {
+    const pins = planPins([item("a", 0), item("b", 1, 35.2, 139.2), item("c", 2, 35.3, 139.3)]);
+    expect(pins.map((p) => p.number)).toEqual([2, 3]);
+  });
+
+  it("order がとびとびでも並び順で番号を振る", () => {
+    const pins = planPins([item("b", 7, 35.2, 139.2), item("a", 3, 35.1, 139.1)]);
+    expect(pins.map((p) => [p.id, p.number])).toEqual([["a", 1], ["b", 2]]);
+  });
+
+  it("hasLocation は片方だけの座標を位置なしとして扱う", () => {
+    expect(hasLocation(item("a", 0, 35.1, 139.1))).toBe(true);
+    expect(hasLocation(item("b", 1, 35.1, null))).toBe(false);
+    expect(hasLocation(item("c", 2))).toBe(false);
+  });
+});
+
+describe("planPinsBounds", () => {
+  it("全ピンを含む範囲を返す", () => {
+    const pins = [
+      { id: "a", name: "a", lat: 35.3, lng: 139.1, number: 1 },
+      { id: "b", name: "b", lat: 35.1, lng: 139.5, number: 2 },
+      { id: "c", name: "c", lat: 35.2, lng: 139.3, number: 3 },
+    ];
+    expect(planPinsBounds(pins)).toEqual([[35.1, 139.1], [35.3, 139.5]]);
+  });
+
+  it("1件なら幅ゼロの範囲、0件なら null", () => {
+    expect(planPinsBounds([{ id: "a", name: "a", lat: 35.1, lng: 139.1, number: 1 }]))
+      .toEqual([[35.1, 139.1], [35.1, 139.1]]);
+    expect(planPinsBounds([])).toBeNull();
   });
 });
