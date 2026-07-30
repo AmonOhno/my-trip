@@ -3,7 +3,7 @@
 「旅開始」を押すだけで、訪れたスポット・移動の足取り・歩数(iOS)を自動記録。
 「旅終了」したら、いつでも地図とタイムラインで当時の足取りを見返せます。
 
-- **完全無料構成**: サーバーなし・全データ端末内保存。地図はOpenStreetMap / MapKit
+- **完全無料構成**: サーバーなし・全データ端末内保存。地図はOpenStreetMap(Web)/ Google Maps SDK(iOS・無制限無料SKUのみ)
 - **Web版**: TypeScript + React (PWA)
 - **iOS版**: SwiftUI(App Store配信対応、バックグラウンド記録 + HealthKit歩数)
 
@@ -40,6 +40,19 @@ open ios/MyTrip/MyTrip.xcodeproj
 
 Xcode 16以上で開き、Signing の Team と Bundle ID を自分のものに変更して実行。
 配信手順の詳細は [docs/04_ios_distribution.md](docs/04_ios_distribution.md)。
+
+### Google マップを使う場合(任意)
+
+APIキーを設定すると地図が Google マップになります。**未設定でもそのまま動きます**(MapKitで描画)。
+
+```bash
+cp ios/MyTrip/MyTrip/Secrets.example.plist ios/MyTrip/MyTrip/Secrets.plist
+# Secrets.plist の GoogleMapsAPIKey に自分のキーを書く(このファイルは .gitignore 済み)
+```
+
+キーは [Google Cloud コンソール](https://console.cloud.google.com/)で「Maps SDK for iOS」を有効化して発行します。
+地図表示のSKU「Maps SDK」は**無制限・無料**です。従量課金になる Geocoding API / Places API は本アプリでは使いません
+(スポット名の取得は Apple の CLGeocoder のまま)。キーには iOS アプリ制限とAPI制限をかけてください。
 
 ## 仕組み(コア)
 

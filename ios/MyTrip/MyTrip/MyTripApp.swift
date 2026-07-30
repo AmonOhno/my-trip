@@ -7,6 +7,8 @@ struct MyTripApp: App {
     @StateObject private var recorder = TripRecorder()
 
     init() {
+        // APIキーがある場合のみGoogleマップで描画する(無ければMapKit)
+        GoogleMapsConfig.start()
         do {
             container = try ModelContainer(for: Trip.self, TripPoint.self, Spot.self, TripPhoto.self, TripPlan.self, PlanItem.self)
         } catch {

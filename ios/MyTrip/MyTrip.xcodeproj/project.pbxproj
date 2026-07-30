@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		ABCD000300000000000000D2 /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = ABCD000300000000000000D1 /* GoogleMaps */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		ABCD000200000000000000C7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -54,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ABCD000300000000000000D2 /* GoogleMaps in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +110,7 @@
 			);
 			name = MyTrip;
 			packageProductDependencies = (
+				ABCD000300000000000000D1 /* GoogleMaps */,
 			);
 			productName = MyTrip;
 			productReference = ABCD000100000000000000AE /* MyTrip.app */;
@@ -162,6 +168,9 @@
 			);
 			mainGroup = ABCD000100000000000000AC;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				ABCD000300000000000000D0 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = ABCD000100000000000000AD /* Products */;
 			projectDirPath = "";
@@ -446,6 +455,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		ABCD000300000000000000D0 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-maps-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		ABCD000300000000000000D1 /* GoogleMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ABCD000300000000000000D0 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;
+			productName = GoogleMaps;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = ABCD000100000000000000B3 /* Project object */;
 }

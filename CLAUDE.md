@@ -28,7 +28,7 @@ xcodebuild test -project MyTrip.xcodeproj -scheme MyTrip \
 
 ## 絶対に守ること
 
-- **コスト0円制約**: 有料API・課金サーバーを導入しない。地図はOSM/MapKit、逆ジオコーディングはNominatim(1req/秒・キャッシュ必須)とCLGeocoderのみ
+- **コスト0円制約**: 課金の発生するAPI・サーバーを導入しない。地図はWeb=OSM、iOS=Google Maps SDK(無制限無料SKUのみ。APIキーは `Secrets.plist`/環境変数から読み、未設定時はMapKitへフォールバック)。逆ジオコーディングはNominatim(1req/秒・キャッシュ必須)とCLGeocoderのみで、従量課金SKU(Geocoding/Places API等)は使わない
 - **ローカルファースト**: 位置・健康データを外部送信するコードを書かない
 - **ロジック二重管理**: 滞在検出(StayPointDetector)とタイムライン導出はWebとiOSで同一アルゴリズム。片方を変えたら必ずもう片方も変更し、`web/src/core/stayPoint.test.ts` を更新する
 - **エクスポート互換**: `my-trip-export/v1` スキーマ(epoch ms)を変えるときは両OSのexport/importを同時に更新
