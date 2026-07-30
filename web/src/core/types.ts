@@ -58,7 +58,13 @@ export interface PlanItem {
   note: string;
   /** 一覧内の表示順 (0始まり) */
   order: number;
+  /** 地図上の位置。未設定(名前だけの場所)は null */
+  lat: number | null;
+  lng: number | null;
 }
+
+/** 座標が入っている「行きたい場所」。地図描画はこの型だけを扱う */
+export type LocatedPlanItem = PlanItem & { lat: number; lng: number };
 
 /** タイムライン表示用(保存せず導出する) */
 export type TimelineSegment =

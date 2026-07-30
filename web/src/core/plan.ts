@@ -1,4 +1,4 @@
-import type { PlanItem, TripPlan } from "./types";
+import type { LocatedPlanItem, PlanItem, TripPlan } from "./types";
 
 /** 計画の進行状態(日単位で判定) */
 export type PlanPhase = "upcoming" | "ongoing" | "past";
@@ -55,6 +55,54 @@ export function movePlanItem(items: PlanItem[], id: string, delta: -1 | 1): Plan
     [sorted[from], sorted[to]] = [sorted[to], sorted[from]];
   }
   return sorted.map((item, i) => (item.order === i ? item : { ...item, order: i }));
+}
+
+/** 地図に立てるピン。番号は一覧での表示順(1始まり)に揃える */
+export interface PlanPin {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  number: number;
+}
+
+/** 位置が入っている場所か */
+export function hasLocation(item: PlanItem): item is LocatedPlanItem {
+  return item.lat !== null && item.lng !== null;
+}
+
+/**
+ * 一覧(order順)からピンを作る。位置未設定の場所は地図に出ないが、
+ * 番号は一覧の並びそのままなので「3番の場所」が一覧と地図で一致する。
+ */
+export function planPins(items: readonly PlanItem[]): PlanPin[] {
+  const sorted = [...items].sort((a, b) => a.order - b.order);
+  const pins: PlanPin[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    const item = sorted[i];
+    if (!hasLocation(item)) continue;
+    pins.push({ id: item.id, name: item.name, lat: item.lat, lng: item.lng, number: i + 1 });
+  }
+  return pins;
+}
+
+/** ピン全体が収まる範囲 `[[南,西],[北,東]]`。ピンがなければ null */
+export function planPinsBounds(
+  pins: readonly PlanPin[],
+): [[number, number], [number, number]] | null {
+  if (pins.length === 0) return null;
+  let south = pins[0].lat;
+  let north = pins[0].lat;
+  let west = pins[0].lng;
+  let east = pins[0].lng;
+  for (let i = 1; i < pins.length; i++) {
+    const { lat, lng } = pins[i];
+    if (lat < south) south = lat;
+    if (lat > north) north = lat;
+    if (lng < west) west = lng;
+    if (lng > east) east = lng;
+  }
+  return [[south, west], [north, east]];
 }
 
 /** `<input type="date">` 用の値 (YYYY-MM-DD、ローカル日付) */
