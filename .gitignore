@@ -17,3 +17,7 @@ ios/MyTrip/MyTrip/Secrets.plist
 
 # Claude local settings
 .claude/settings.local.json
+
+# Playwright
+web/test-results/
+web/playwright-report/

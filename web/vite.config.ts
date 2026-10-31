@@ -7,5 +7,7 @@ export default defineConfig({
   server: { port: 5173 },
   test: {
     environment: "node",
+    // e2e/ は Playwright で実行する(vitest の対象外)
+    exclude: ["**/node_modules/**", "e2e/**"],
   },
 });

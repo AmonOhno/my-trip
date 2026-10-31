@@ -10,6 +10,7 @@
 npm run dev    # 開発サーバ :5173
 npm run test   # vitest(コアロジック)
 npm run build  # tsc + vite build
+CI=1 npx playwright test --retries=0  # スモークE2E(PRのCIと同条件。docs/05_ci.md)
 
 # iOS (ios/MyTrip/)
 xcodebuild -project MyTrip.xcodeproj -scheme MyTrip \

@@ -15,6 +15,7 @@
 | [docs/02_architecture.md](docs/02_architecture.md) | アーキテクチャ設計書(滞在検出アルゴリズム含む) |
 | [docs/03_screens.md](docs/03_screens.md) | 画面設計書・デザイントークン |
 | [docs/04_ios_distribution.md](docs/04_ios_distribution.md) | App Store配信手順 |
+| [docs/05_ci.md](docs/05_ci.md) | CI(PRでのE2E・Claude Codeレビュー)と必要な設定 |
 
 ## Web版の起動
 
@@ -24,7 +25,18 @@ npm install
 npm run dev        # http://localhost:5173
 npm run test       # コアロジックのユニットテスト
 npm run build      # 本番ビルド (dist/)
+npm run test:e2e   # Playwright スモークE2E(初回は npx playwright install chromium)
 ```
+
+## CI
+
+PR の作成・更新時に GitHub Actions で次が動きます(詳細・必要な設定は [docs/05_ci.md](docs/05_ci.md))。
+
+- **E2E** (`.github/workflows/e2e.yml`): web/ のユニットテスト + Playwright スモークE2E。リトライなしで全件パスしなければ失敗
+- **Claude Code Review** (`.github/workflows/claude-code-review.yml`): 公式 `code-review` プラグインで PR をレビュー
+
+利用には Claude GitHub App のインストールと、Secret `ANTHROPIC_API_KEY` または `CLAUDE_CODE_OAUTH_TOKEN` の登録が必要です。
+E2E をマージ条件にするには、ブランチ保護で必須チェック `e2e` を設定してください。
 
 静的ホスティング(GitHub Pages等)にそのままデプロイ可能。サブパス配信時は
 `npm run build -- --base=/my-trip/` のように base を指定します。
