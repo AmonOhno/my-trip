@@ -1,5 +1,35 @@
 # My Trip — 旅の自動記録アプリ
 
+## アーキテクチャ概要
+
+サーバーを持たないローカルファースト構成です。Web版(React PWA)とiOS版(SwiftUI)がそれぞれ端末内にデータを保存し、外部とは地図タイルと地名の取得だけで通信します。
+C4モデルの各図(System Context / Container / Component)とデータフローは [docs/architecture.md](docs/architecture.md) にまとめています。
+
+```mermaid
+C4Context
+  title System Context — My Trip
+
+  Person(traveler, "旅行者", "旅の足取りを記録して見返す個人ユーザー")
+
+  System(mytrip, "My Trip", "旅の足取りを自動記録するアプリ(Web PWA / iOS)。データはすべて端末内に保存")
+
+  System_Ext(osm, "OpenStreetMap", "地図タイル配信 / Nominatim 逆ジオコーディング・地名検索")
+  System_Ext(google, "Google Maps Platform", "Maps SDK for iOS の地図描画(無料SKUのみ)")
+  System_Ext(apple, "Apple プラットフォームサービス", "CLGeocoder・MKLocalSearch・MapKit")
+  System_Ext(device, "端末の OS 機能", "GPS / HealthKit / 写真ライブラリ / ファイル")
+
+  Rel(traveler, mytrip, "旅の開始・終了、閲覧、計画づくり")
+  Rel(mytrip, osm, "タイル取得・座標から地名 (Web)", "HTTPS")
+  Rel(mytrip, google, "地図タイル取得 (iOS、APIキー設定時)", "HTTPS")
+  Rel(mytrip, apple, "座標から地名・地名検索・地図 (iOS)", "Apple SDK")
+  Rel(mytrip, device, "位置・歩数・写真の取得、JSONの入出力", "OS API")
+
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+```
+
+→ 詳細: [docs/architecture.md](docs/architecture.md)
+
+
 「旅開始」を押すだけで、訪れたスポット・移動の足取り・歩数(iOS)を自動記録。
 「旅終了」したら、いつでも地図とタイムラインで当時の足取りを見返せます。
 
@@ -13,6 +43,7 @@
 |---|---|
 | [docs/01_requirements.md](docs/01_requirements.md) | 要件定義書 |
 | [docs/02_architecture.md](docs/02_architecture.md) | アーキテクチャ設計書(滞在検出アルゴリズム含む) |
+| [docs/architecture.md](docs/architecture.md) | C4モデルによるアーキテクチャ図(Context / Container / Component・データフロー) |
 | [docs/03_screens.md](docs/03_screens.md) | 画面設計書・デザイントークン |
 | [docs/04_ios_distribution.md](docs/04_ios_distribution.md) | App Store配信手順 |
 
